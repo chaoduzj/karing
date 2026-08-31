@@ -1186,6 +1186,14 @@ class SettingConfigItemProxy {
   String socksUsername = "";
   String socksPassword = "";
 
+  String getsocksLocalProxyUrl(int port) {
+    String auth = "";
+    if (socksLocalUsername.isNotEmpty && socksLocalPassword.isNotEmpty) {
+      auth = "$socksLocalUsername:$socksLocalPassword@";
+    }
+    return "PROXY ${auth}127.0.0.1:$port";
+  }
+
   void setAllowAllInbounds(bool allow) {
     host = allow ? hostNetwork : hostLocal;
   }

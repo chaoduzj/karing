@@ -299,33 +299,46 @@ class _BackupAndSyncWebdavScreenState
     _webdavClient = null;
     _fileList.clear();
     setState(() {});
-    List<int?> ports = [null];
+    List<String?> proxyUrls = [null];
     final connectMode = settingConfig.webdav.connectMode;
     var started = await VPNService.getStarted();
     if (started) {
       if (connectMode == ProxyStrategy.onlyDirect) {
-        ports = [settingConfig.proxy.mixedDirectPort];
-      } else if (connectMode == ProxyStrategy.onlyProxy) {
-        ports = [settingConfig.proxy.mixedForwardPort];
-      } else if (connectMode == ProxyStrategy.preferDirect) {
-        ports = [
-          settingConfig.proxy.mixedDirectPort,
-          settingConfig.proxy.mixedForwardPort,
+        proxyUrls = [
+          settingConfig.proxy.getsocksLocalProxyUrl(
+            settingConfig.proxy.mixedDirectPort,
+          ),
         ];
-      } else if (connectMode == ProxyStrategy.preferProxy) {
-        ports = [
-          settingConfig.proxy.mixedForwardPort,
-          settingConfig.proxy.mixedDirectPort,
+      } else if (connectMode == ProxyStrategy.onlyProxy) {
+        proxyUrls = [
+          settingConfig.proxy.getsocksLocalProxyUrl(
+            settingConfig.proxy.mixedForwardPort,
+          ),
+        ];
+      } else if (connectMode == ProxyStrategy.preferDirect) {
+        proxyUrls = [
+          settingConfig.proxy.getsocksLocalProxyUrl(
+            settingConfig.proxy.mixedDirectPort,
+          ),
+          settingConfig.proxy.getsocksLocalProxyUrl(
+            settingConfig.proxy.mixedForwardPort,
+          ),
+        ];
+        proxyUrls = [
+          settingConfig.proxy.getsocksLocalProxyUrl(
+            settingConfig.proxy.mixedForwardPort,
+          ),
+          settingConfig.proxy.getsocksLocalProxyUrl(
+            settingConfig.proxy.mixedDirectPort,
+          ),
         ];
       }
     }
 
     late ReturnResult<WebdavClient> result;
-    int? currentPort;
-    for (var port in ports) {
-      currentPort = port;
+    for (var proxyUrl in proxyUrls) {
       result = await WebdavClientUtils.connect(
-        port,
+        proxyUrl,
         settingConfig.webdav.url,
         settingConfig.webdav.user,
         settingConfig.webdav.password,
@@ -349,7 +362,7 @@ class _BackupAndSyncWebdavScreenState
       final tcontext = Translations.of(context);
       DialogUtils.showAlertDialog(
         context,
-        "${tcontext.BackupAndSyncWebdavScreen.webdavLoginFailed} ${result.error!.message} port:$currentPort",
+        "${tcontext.BackupAndSyncWebdavScreen.webdavLoginFailed} ${result.error!.message}",
         showCopy: true,
         showFAQ: true,
         withVersion: true,
